@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>WORDLE CRACKER</title>
+
+    <style>
+        body {
+            background-color: #212121;
+            text-align: center;
+        }
+        .tile {
+            width: 58px;
+            height: 58px;
+            border: solid;
+            border-width: 2px;
+            border-color: #565758;
+        }
+        .letter {
+            width: 94%;
+            height: 96%;
+            background: transparent;
+            border: none;
+            color: #d7dadc;
+            font-size: 2rem;
+            line-height: 2rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            text-align: center;
+            vertical-align: middle;
+        }
+        .button {
+            width: 100%;
+            background: transparent;
+            border-width: thin;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        label {
+            color: #d7dadc;
+            display: block;
+            margin-bottom: 10px;
+            font-size: large;
+        }
+        textarea {
+            background: #333333;
+            color: #d7dadc;
+            padding: 10px;
+            max-width: 100%;
+            line-height: 1.5;
+            border-radius: 5px;
+            border: 1px solid #565758;
+        }
+    </style>
+
+    <script src="allWords.js"></script>
+    <script>
+    window.onload = function() {
+        const WORD_LIST = ALL_WORDS.match(/.{1,5}/g);
+        const ROW = 6, COL = 5;
+        const STATES = ["unknown", "absent", "present", "correct"];
+
+        (function initTable() {
+            let html = "";
+            for (let row = 0; row < ROW; ++row) {
+                html += "<tr>";
+                for (let col = 0; col < COL; ++col) {
+                    html += `<td class="tile"><input class="letter" id="letter${row}${col}" type="text" maxlength="1"/></td>`;
+                }
+                html += "</tr><tr>";
+                for (let col = 0; col < COL; ++col) {
+                    html += `<td><input class="button" id="button${row}${col}" type="button"/></td>`
+                }
+                html += "</tr>";
+            }
+            document.getElementById("board").innerHTML = html;
+        })();
+
+        function rotateState(button) {
+            const oldState = button.state ?? "unknown";
+            const newState = STATES[(STATES.indexOf(oldState) + 1) % STATES.length];
+            setButtonState(button, newState);
+        }
+
+        function setButtonState(button, state) {
+            const COLORS = {
+                "unknown": "#212121",
+                "absent":  "#3a3a3c",
+                "present": "#b59f3b",
+                "correct": "#538d4e",
+            };
+            const id = button.id;
+            const row = id[id.length - 2];
+            const col = id[id.length - 1];
+            button.state = state;
+            button.style.background = COLORS[state];
+            button.title = state;
+            const letterEl = document.getElementById(`letter${row}${col}`);
+            letterEl.style.background = COLORS[state];
+            updateCandidateList();
+        }
+
+        for (let row = 0; row < ROW; ++row) {
+            for (let col = 0; col < COL; ++col) {
+                const letterEl = document.getElementById(`letter${row}${col}`);
+                letterEl.addEventListener("input", e => {
+                    if (e.target.value.length > 0) {
+                        e.target.value = e.target.value.toUpperCase();
+                        // Focus jumps to the next letter field if it is empty
+                        if (col < COL - 1) {
+                            const nextLetterEl = document.getElementById(`letter${row}${col + 1}`);
+                            if (nextLetterEl.value.length < 1) {
+                                nextLetterEl.focus();
+                            }
+                        }
+                    }
+                    updateCandidateList();
+                });
+                const button = document.getElementById(`button${row}${col}`);
+                button.addEventListener("click", e => {
+                    rotateState(e.target);
+                });
+                setButtonState(button, "unknown");
+            }
+        }
+
+        function updateCandidateList() {
+            let candidateList = [];
+            for (const word of WORD_LIST) {
+                let isCandidateWord = true;
+                for (let row = 0; row < ROW; ++row) {
+                    const absentLetters = [];
+                    const presentLetters = [];
+                    let remainingLetters = word;
+                    for (let col = 0; col < COL; ++col) {
+                        const letter = document.getElementById(`letter${row}${col}`).value;
+                        if (letter.length === 0) {
+                            continue;
+                        }
+                        const state = document.getElementById(`button${row}${col}`).state ?? "unknown";
+                        if (state == "absent") {
+                            absentLetters.push(letter);
+                        } else if (state == "present") {
+                            presentLetters.push(letter);
+                        } else if (state == "correct") {
+                            if (word[col] !== letter) {
+                                isCandidateWord = false;
+                                break;
+                            }
+                            remainingLetters = remainingLetters.replace(letter, "");
+                        }
+                    }
+                    for (const absentLetter of absentLetters) {
+                        if (remainingLetters.indexOf(absentLetter) >= 0) {
+                            isCandidateWord = false;
+                            break;
+                        }
+                    }
+                    for (const presentLetter of presentLetters) {
+                        if (remainingLetters.indexOf(presentLetter) < 0) {
+                            isCandidateWord = false;
+                            break;
+                        }
+                    }
+                    if (!isCandidateWord) {
+                        break;
+                    }
+                }
+                if (isCandidateWord) {
+                    candidateList.push(word);
+                }
+            }
+
+            let title = `${candidateList.length} candidate word`;
+            title += candidateList.length === 1 ? "!!" : "s";
+            document.getElementById("candidateWordsTitle").innerHTML = title;
+            document.getElementById("candidateWords").value = candidateList.join("  ");
+        }
+
+        updateCandidateList();
+        document.getElementById("letter00").focus();
+    }
+    </script>
+  </head>
+  <body>
+    <label>WORDLE CRACKER</label>
+    <div style="display: flex; justify-content: center;">
+      <div style="margin: 10px; 20px;">
+        <label>Guesses</label>
+        <table id="board" style="margin: 0 auto;"></table>
+      </div>
+      <div style="margin: 10px 20px;">
+        <label id="candidateWordsTitle"></label>
+        <textarea id="candidateWords" rows="27" cols="33" readonly>
+        </textarea>
+      </div>
+    </div>
+    <a href="https://github.com/randalhsu/WordleCracker" style="text-decoration: none;"><label style="cursor: pointer;">By Randal</label></a>
+  </body>
+</html>
