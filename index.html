@@ -139,11 +139,11 @@
                             continue;
                         }
                         const state = document.getElementById(`button${row}${col}`).state ?? "unknown";
-                        if (state == "absent") {
+                        if (state === "absent") {
                             absentLetters.push(letter);
-                        } else if (state == "present") {
+                        } else if (state === "present") {
                             presentLetters.push(letter);
-                        } else if (state == "correct") {
+                        } else if (state === "correct") {
                             if (word[col] !== letter) {
                                 isCandidateWord = false;
                                 break;
