@@ -170,7 +170,7 @@
                     letterEl.addEventListener("input", e => {
                         if (e.target.value.length > 0) {
                             e.target.value = e.target.value.toUpperCase();
-                            // Focus jumps to the next letter field if it is empty
+                            // Focus jumps to the next letter tile if it is empty
                             if (col < COL - 1) {
                                 const nextLetterEl = document.getElementById(`letter${row}${col + 1}`);
                                 if (nextLetterEl.value.length < 1) {
@@ -197,9 +197,9 @@
   <body>
     <label>WORDLE CRACKER</label>
     <div style="display: flex; justify-content: center;">
-      <div style="margin: 10px; 20px;">
+      <div style="margin: 10px 20px;">
         <label>Guesses</label>
-        <table id="board" style="margin: 0 auto;"></table>
+        <table id="board"></table>
       </div>
       <div style="margin: 10px 20px;">
         <label id="candidateWordsTitle"></label>
